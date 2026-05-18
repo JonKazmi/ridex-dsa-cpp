@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ride Booking System</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0e1a;
+    --card: #111827;
+    --card2: #1a2235;
+    --accent: #f59e0b;
+    --accent2: #3b82f6;
+    --green: #10b981;
+    --red: #ef4444;
+    --text: #f1f5f9;
+    --muted: #64748b;
+    --border: #1e293b;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+  }
+
+  /* TOP NAV */
+  nav {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.4rem;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+  }
+  .logo span { color: var(--text); }
+  .nav-tags { display: flex; gap: 8px; }
+  .tag {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  .tag.active { border-color: var(--accent); color: var(--accent); }
+
+  /* LAYOUT */
+  .container { max-width: 1400px; margin: 0 auto; padding: 24px 32px; }
+
+  .grid-main {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+
+  .grid-bottom {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+  }
+
+  /* CARDS */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+  }
+
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .card-title .dot.blue { background: var(--accent2); }
+  .card-title .dot.green { background: var(--green); }
+  .card-title .dot.red { background: var(--red); }
+
+  /* MAP */
+  #mapCanvas {
+    width: 100%;
+    height: 420px;
+    border-radius: 12px;
+    background: #0d1322;
+    border: 1px solid var(--border);
+    cursor: pointer;
+  }
+
+  /* FORM */
+  .form-group { margin-bottom: 12px; }
+  label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 6px; }
+  input, select {
+    width: 100%;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input:focus, select:focus { border-color: var(--accent); }
+  select option { background: var(--card2); }
+
+  .btn {
+    width: 100%;
+    padding: 11px;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 4px;
+  }
+  .btn-yellow { background: var(--accent); color: #000; }
+  .btn-yellow:hover { background: #fbbf24; transform: translateY(-1px); }
+  .btn-blue { background: var(--accent2); color: #fff; }
+  .btn-blue:hover { background: #60a5fa; transform: translateY(-1px); }
+  .btn-green { background: var(--green); color: #fff; }
+  .btn-green:hover { background: #34d399; transform: translateY(-1px); }
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* TABS */
+  .tabs { display: flex; gap: 4px; margin-bottom: 16px; background: var(--card2); border-radius: 10px; padding: 4px; }
+  .tab {
+    flex: 1; padding: 8px; text-align: center;
+    border-radius: 7px; font-size: 0.82rem;
+    cursor: pointer; color: var(--muted);
+    transition: all 0.2s;
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+  }
+  .tab.active { background: var(--card); color: var(--text); }
+
+  /* DRIVER LIST */
+  .driver-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: var(--card2);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    border: 1px solid var(--border);
+    transition: border-color 0.2s;
+  }
+  .driver-item:hover { border-color: var(--accent); }
+  .driver-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), #f97316);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 0.9rem;
+    color: #000;
+    flex-shrink: 0;
+  }
+  .driver-info { flex: 1; }
+  .driver-name { font-weight: 500; font-size: 0.9rem; }
+  .driver-loc { font-size: 0.75rem; color: var(--muted); }
+  .status-badge {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    font-family: 'Syne', sans-serif;
+  }
+  .status-badge.available { background: rgba(16,185,129,0.15); color: var(--green); }
+  .status-badge.busy { background: rgba(239,68,68,0.15); color: var(--red); }
+
+  /* QUEUE ITEMS */
+  .queue-item {
+    padding: 10px 12px;
+    background: var(--card2);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    border-left: 3px solid var(--accent2);
+    font-size: 0.85rem;
+  }
+  .queue-item .pname { font-weight: 600; margin-bottom: 4px; }
+  .queue-item .route { color: var(--muted); font-size: 0.78rem; }
+  .queue-arrow { color: var(--accent); margin: 0 4px; }
+
+  /* HISTORY ITEMS */
+  .history-item {
+    padding: 10px 12px;
+    background: var(--card2);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    border-left: 3px solid var(--green);
+    font-size: 0.85rem;
+  }
+  .history-item .h-top { display: flex; justify-content: space-between; margin-bottom: 4px; }
+  .history-item .h-name { font-weight: 600; }
+  .history-item .h-fare { color: var(--green); font-weight: 700; }
+  .history-item .h-route { color: var(--muted); font-size: 0.78rem; }
+
+  /* PATH RESULT */
+  #pathResult {
+    background: var(--card2);
+    border-radius: 10px;
+    padding: 14px;
+    margin-top: 12px;
+    font-size: 0.85rem;
+    display: none;
+    border: 1px solid var(--border);
+  }
+  .path-nodes { color: var(--accent); font-weight: 600; word-break: break-word; line-height: 1.8; }
+  .path-dist { color: var(--muted); margin-top: 6px; font-size: 0.8rem; }
+
+  /* TRAVERSAL */
+  #traversalResult {
+    background: var(--card2);
+    border-radius: 10px;
+    padding: 14px;
+    margin-top: 12px;
+    font-size: 0.85rem;
+    display: none;
+    border: 1px solid var(--border);
+  }
+  .t-nodes { color: var(--accent2); font-weight: 500; line-height: 1.8; }
+
+  /* STATS ROW */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+  }
+  .stat-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--accent);
+  }
+  .stat-label { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+
+  .empty-msg { color: var(--muted); font-size: 0.85rem; text-align: center; padding: 20px 0; }
+
+  .process-btn-wrap { margin-top: 12px; }
+
+  /* LEGEND */
+  .legend { display: flex; gap: 16px; margin-top: 10px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--muted); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+
+  .scroll-area { max-height: 280px; overflow-y: auto; }
+  .scroll-area::-webkit-scrollbar { width: 4px; }
+  .scroll-area::-webkit-scrollbar-track { background: transparent; }
+  .scroll-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Ride<span>X</span></div>
+  <div class="nav-tags">
+    <div class="tag active">Graph + Dijkstra's</div>
+    <div class="tag">Queue</div>
+    <div class="tag">Linked List</div>
+    <div class="tag">Stack</div>
+    <div class="tag">BFS / DFS</div>
+  </div>
+</nav>
+
+<div class="container">
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-val" id="statDrivers">3</div>
+      <div class="stat-label">Total Drivers</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="statAvailable">3</div>
+      <div class="stat-label">Available</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="statQueue">0</div>
+      <div class="stat-label">Ride Queue</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="statRides">0</div>
+      <div class="stat-label">Completed Rides</div>
+    </div>
+  </div>
+
+  <!-- MAIN GRID -->
+  <div class="grid-main">
+
+    <!-- MAP -->
+    <div class="card">
+      <div class="card-title"><div class="dot blue"></div> City Map — Click nodes to select</div>
+      <canvas id="mapCanvas"></canvas>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div> Location</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div> Selected</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div> Shortest Path</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#8b5cf6"></div> BFS/DFS Visit</div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div>
+      <!-- TABS -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab('request')">Request</div>
+          <div class="tab" onclick="switchTab('driver')">Driver</div>
+          <div class="tab" onclick="switchTab('path')">Path</div>
+          <div class="tab" onclick="switchTab('traverse')">Traverse</div>
+        </div>
+
+        <!-- REQUEST RIDE TAB -->
+        <div id="tab-request">
+          <div class="form-group">
+            <label>Passenger Name</label>
+            <input type="text" id="passengerName" placeholder="e.g. Usman">
+          </div>
+          <div class="form-group">
+            <label>Pickup Location</label>
+            <select id="fromLoc"></select>
+          </div>
+          <div class="form-group">
+            <label>Destination</label>
+            <select id="toLoc"></select>
+          </div>
+          <button class="btn btn-yellow" onclick="requestRide()">Request Ride</button>
+          <div class="process-btn-wrap">
+            <button class="btn btn-green" onclick="processNextRide()" style="margin-top:8px">Process Next in Queue</button>
+          </div>
+        </div>
+
+        <!-- ADD DRIVER TAB -->
+        <div id="tab-driver" style="display:none">
+          <div class="form-group">
+            <label>Driver Name</label>
+            <input type="text" id="driverName" placeholder="e.g. Hamza">
+          </div>
+          <div class="form-group">
+            <label>Starting Location</label>
+            <select id="driverLoc"></select>
+          </div>
+          <button class="btn btn-blue" onclick="addDriver()">Add Driver</button>
+        </div>
+
+        <!-- SHORTEST PATH TAB -->
+        <div id="tab-path" style="display:none">
+          <div class="form-group">
+            <label>From</label>
+            <select id="pathFrom"></select>
+          </div>
+          <div class="form-group">
+            <label>To</label>
+            <select id="pathTo"></select>
+          </div>
+          <button class="btn btn-yellow" onclick="findShortestPath()">Find Shortest Path</button>
+          <div id="pathResult">
+            <div class="path-nodes" id="pathNodes"></div>
+            <div class="path-dist" id="pathDist"></div>
+          </div>
+        </div>
+
+        <!-- TRAVERSE TAB -->
+        <div id="tab-traverse" style="display:none">
+          <div class="form-group">
+            <label>Starting Location</label>
+            <select id="traverseFrom"></select>
+          </div>
+          <button class="btn btn-blue" onclick="runBFS()" style="margin-bottom:8px">Run BFS</button>
+          <button class="btn btn-outline" onclick="runDFS()">Run DFS</button>
+          <div id="traversalResult">
+            <div style="font-size:0.75rem;color:var(--muted);margin-bottom:6px" id="traversalType"></div>
+            <div class="t-nodes" id="traversalNodes"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM GRID -->
+  <div class="grid-bottom">
+
+    <!-- DRIVERS -->
+    <div class="card">
+      <div class="card-title"><div class="dot"></div> Drivers <span style="font-size:0.75rem;margin-left:auto" id="driverCount"></span></div>
+      <div class="scroll-area" id="driverList"></div>
+    </div>
+
+    <!-- QUEUE -->
+    <div class="card">
+      <div class="card-title"><div class="dot blue"></div> Ride Queue</div>
+      <div class="scroll-area" id="queueList"></div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="card">
+      <div class="card-title"><div class="dot green"></div> Ride History</div>
+      <div class="scroll-area" id="historyList"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ============================================================
+//  DATA
+// ============================================================
+const locations = [
+  "Airport", "City Center", "University", "Hospital",
+  "Mall", "Train Station", "Park", "Market", "Hotel", "Bus Terminal"
+];
+
+const graph = [
+  [0,10, 0, 0, 0,15, 0, 0, 0, 0],
+  [10, 0, 8, 5, 7, 0, 0, 0, 0, 0],
+  [0, 8, 0, 0, 0, 0, 4, 0, 0, 0],
+  [0, 5, 0, 0, 6, 0, 0, 3, 0, 0],
+  [0, 7, 0, 6, 0, 0, 0, 5, 9, 0],
+  [15, 0, 0, 0, 0, 0, 0, 0, 0,11],
+  [0, 0, 4, 0, 0, 0, 0, 2, 0, 0],
+  [0, 0, 0, 3, 5, 0, 2, 0, 0, 8],
+  [0, 0, 0, 0, 9, 0, 0, 0, 0, 6],
+  [0, 0, 0, 0, 0,11, 0, 8, 6, 0]
+];
+
+// Node positions on canvas (will be set after canvas size known)
+let nodePos = [];
+
+// State
+let drivers = [
+  { id:1, name:"Ali",   loc:1, available:true },
+  { id:2, name:"Ahmed", loc:5, available:true },
+  { id:3, name:"Sara",  loc:3, available:true },
+];
+let driverIdCounter = 4;
+let rideQueue = [];
+let rideHistory = [];
+let highlightedPath = [];
+let traversalVisited = [];
+let selectedNode = -1;
+
+// ============================================================
+//  CANVAS MAP
+// ============================================================
+const canvas = document.getElementById('mapCanvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+  canvas.width = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
+  setNodePositions();
+  drawMap();
+}
+
+function setNodePositions() {
+  const w = canvas.width, h = canvas.height;
+  const positions = [
+    [0.15, 0.12], // Airport
+    [0.50, 0.35], // City Center
+    [0.35, 0.65], // University
+    [0.65, 0.25], // Hospital
+    [0.72, 0.55], // Mall
+    [0.18, 0.40], // Train Station
+    [0.42, 0.82], // Park
+    [0.60, 0.78], // Market
+    [0.85, 0.70], // Hotel
+    [0.82, 0.20], // Bus Terminal
+  ];
+  nodePos = positions.map(([x,y]) => ({ x: x*w, y: y*h }));
+}
+
+function drawMap() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Draw edges
+  for (let i = 0; i < 10; i++) {
+    for (let j = i+1; j < 10; j++) {
+      if (graph[i][j] === 0) continue;
+      const isPath = highlightedPath.includes(i) && highlightedPath.includes(j) &&
+        Math.abs(highlightedPath.indexOf(i) - highlightedPath.indexOf(j)) === 1;
+      const isTraversal = traversalVisited.includes(i) && traversalVisited.includes(j);
+
+      ctx.beginPath();
+      ctx.moveTo(nodePos[i].x, nodePos[i].y);
+      ctx.lineTo(nodePos[j].x, nodePos[j].y);
+      ctx.strokeStyle = isPath ? '#10b981' : isTraversal ? '#8b5cf680' : '#1e293b';
+      ctx.lineWidth = isPath ? 3 : isTraversal ? 2 : 1.5;
+      ctx.stroke();
+
+      // Distance label
+      const mx = (nodePos[i].x + nodePos[j].x)/2;
+      const my = (nodePos[i].y + nodePos[j].y)/2;
+      ctx.fillStyle = isPath ? '#10b981' : '#475569';
+      ctx.font = '11px DM Sans';
+      ctx.textAlign = 'center';
+      ctx.fillText(graph[i][j]+'km', mx, my - 4);
+    }
+  }
+
+  // Draw nodes
+  for (let i = 0; i < 10; i++) {
+    const p = nodePos[i];
+    const isPath = highlightedPath.includes(i);
+    const isTraversal = traversalVisited.includes(i);
+    const isSelected = selectedNode === i;
+
+    // Glow
+    if (isPath || isSelected) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 22, 0, Math.PI*2);
+      ctx.fillStyle = isPath ? 'rgba(16,185,129,0.2)' : 'rgba(245,158,11,0.2)';
+      ctx.fill();
+    }
+
+    // Circle
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 14, 0, Math.PI*2);
+    ctx.fillStyle = isPath ? '#10b981' : isTraversal ? '#8b5cf6' : isSelected ? '#f59e0b' : '#1e3a5f';
+    ctx.fill();
+    ctx.strokeStyle = isPath ? '#34d399' : isSelected ? '#fbbf24' : '#3b82f6';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Index
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 11px Syne';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(i, p.x, p.y);
+
+    // Label
+    ctx.fillStyle = isPath ? '#10b981' : isSelected ? '#f59e0b' : '#94a3b8';
+    ctx.font = '11px DM Sans';
+    ctx.textBaseline = 'top';
+    ctx.fillText(locations[i], p.x, p.y + 18);
+  }
+
+  // Draw driver markers
+  drivers.forEach(d => {
+    const p = nodePos[d.loc];
+    ctx.beginPath();
+    ctx.arc(p.x + 14, p.y - 14, 7, 0, Math.PI*2);
+    ctx.fillStyle = d.available ? '#10b981' : '#ef4444';
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 8px Syne';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('D', p.x+14, p.y-14);
+  });
+}
+
+canvas.addEventListener('click', e => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  for (let i = 0; i < 10; i++) {
+    const dx = nodePos[i].x - mx;
+    const dy = nodePos[i].y - my;
+    if (Math.sqrt(dx*dx+dy*dy) < 18) {
+      selectedNode = i;
+      // Auto-fill selects
+      document.getElementById('fromLoc').value = i;
+      document.getElementById('pathFrom').value = i;
+      document.getElementById('traverseFrom').value = i;
+      drawMap();
+      break;
+    }
+  }
+});
+
+// ============================================================
+//  DIJKSTRA
+// ============================================================
+function dijkstra(src) {
+  const INF = 1e9;
+  const dist = Array(10).fill(INF);
+  const parent = Array(10).fill(-1);
+  const visited = Array(10).fill(false);
+  dist[src] = 0;
+
+  for (let count = 0; count < 9; count++) {
+    let u = -1, minD = INF;
+    for (let i = 0; i < 10; i++) {
+      if (!visited[i] && dist[i] < minD) { minD = dist[i]; u = i; }
+    }
+    if (u === -1) break;
+    visited[u] = true;
+    for (let v = 0; v < 10; v++) {
+      if (graph[u][v] && !visited[v] && dist[u] + graph[u][v] < dist[v]) {
+        dist[v] = dist[u] + graph[u][v];
+        parent[v] = u;
+      }
+    }
+  }
+  return { dist, parent };
+}
+
+function getPath(parent, dest) {
+  const path = [];
+  let cur = dest;
+  while (cur !== -1) { path.unshift(cur); cur = parent[cur]; }
+  return path;
+}
+
+// ============================================================
+//  BFS
+// ============================================================
+function bfs(src) {
+  const visited = Array(10).fill(false);
+  const order = [];
+  const q = [src];
+  visited[src] = true;
+  while (q.length) {
+    const node = q.shift();
+    order.push(node);
+    for (let i = 0; i < 10; i++) {
+      if (graph[node][i] && !visited[i]) { visited[i] = true; q.push(i); }
+    }
+  }
+  return order;
+}
+
+// ============================================================
+//  DFS
+// ============================================================
+function dfs(src) {
+  const visited = Array(10).fill(false);
+  const order = [];
+  function helper(node) {
+    visited[node] = true;
+    order.push(node);
+    for (let i = 0; i < 10; i++) {
+      if (graph[node][i] && !visited[i]) helper(i);
+    }
+  }
+  helper(src);
+  return order;
+}
+
+// ============================================================
+//  UI ACTIONS
+// ============================================================
+function addDriver() {
+  const name = document.getElementById('driverName').value.trim();
+  const loc = parseInt(document.getElementById('driverLoc').value);
+  if (!name) { alert('Enter driver name!'); return; }
+  drivers.push({ id: driverIdCounter++, name, loc, available: true });
+  document.getElementById('driverName').value = '';
+  updateAll();
+}
+
+function requestRide() {
+  const name = document.getElementById('passengerName').value.trim();
+  const from = parseInt(document.getElementById('fromLoc').value);
+  const to = parseInt(document.getElementById('toLoc').value);
+  if (!name) { alert('Enter passenger name!'); return; }
+  if (from === to) { alert('Pickup and destination cannot be same!'); return; }
+  rideQueue.push({ passenger: name, from, to });
+  document.getElementById('passengerName').value = '';
+  updateAll();
+}
+
+function processNextRide() {
+  if (!rideQueue.length) { alert('No ride requests in queue!'); return; }
+  const avail = drivers.find(d => d.available);
+  if (!avail) { alert('No available drivers!'); return; }
+
+  const ride = rideQueue.shift();
+  const { dist: dist1, parent: p1 } = dijkstra(avail.loc);
+  const { dist: dist2, parent: p2 } = dijkstra(ride.from);
+
+  const ridePath = getPath(p2, ride.to);
+  highlightedPath = ridePath;
+
+  const fare = dist2[ride.to] * 20;
+  rideHistory.unshift({
+    passenger: ride.passenger,
+    driver: avail.name,
+    from: locations[ride.from],
+    to: locations[ride.to],
+    distance: dist2[ride.to],
+    fare
+  });
+
+  avail.available = false;
+  avail.loc = ride.to;
+
+  setTimeout(() => { avail.available = true; updateAll(); }, 3000);
+  traversalVisited = [];
+  updateAll();
+}
+
+function findShortestPath() {
+  const from = parseInt(document.getElementById('pathFrom').value);
+  const to = parseInt(document.getElementById('pathTo').value);
+  if (from === to) { alert('Source and destination are the same!'); return; }
+  const { dist, parent } = dijkstra(from);
+  const path = getPath(parent, to);
+  highlightedPath = path;
+  traversalVisited = [];
+
+  const el = document.getElementById('pathResult');
+  el.style.display = 'block';
+  document.getElementById('pathNodes').innerHTML = path.map(i => locations[i]).join(' <span style="color:#f59e0b">→</span> ');
+  document.getElementById('pathDist').textContent = `Total distance: ${dist[to]} km  |  Fare: Rs. ${dist[to] * 20}`;
+  drawMap();
+}
+
+function runBFS() {
+  const src = parseInt(document.getElementById('traverseFrom').value);
+  const order = bfs(src);
+  traversalVisited = order;
+  highlightedPath = [];
+
+  const el = document.getElementById('traversalResult');
+  el.style.display = 'block';
+  document.getElementById('traversalType').textContent = 'BFS Traversal Order:';
+  document.getElementById('traversalNodes').innerHTML = order.map(i => locations[i]).join(' → ');
+  drawMap();
+}
+
+function runDFS() {
+  const src = parseInt(document.getElementById('traverseFrom').value);
+  const order = dfs(src);
+  traversalVisited = order;
+  highlightedPath = [];
+
+  const el = document.getElementById('traversalResult');
+  el.style.display = 'block';
+  document.getElementById('traversalType').textContent = 'DFS Traversal Order:';
+  document.getElementById('traversalNodes').innerHTML = order.map(i => locations[i]).join(' → ');
+  drawMap();
+}
+
+// ============================================================
+//  RENDER UI
+// ============================================================
+function updateAll() {
+  renderDrivers();
+  renderQueue();
+  renderHistory();
+  updateStats();
+  drawMap();
+}
+
+function renderDrivers() {
+  const el = document.getElementById('driverList');
+  if (!drivers.length) { el.innerHTML = '<div class="empty-msg">No drivers yet</div>'; return; }
+  el.innerHTML = drivers.map(d => `
+    <div class="driver-item">
+      <div class="driver-avatar">${d.name[0]}</div>
+      <div class="driver-info">
+        <div class="driver-name">${d.name}</div>
+        <div class="driver-loc">📍 ${locations[d.loc]}</div>
+      </div>
+      <div class="status-badge ${d.available ? 'available' : 'busy'}">${d.available ? 'Available' : 'On Ride'}</div>
+    </div>
+  `).join('');
+}
+
+function renderQueue() {
+  const el = document.getElementById('queueList');
+  if (!rideQueue.length) { el.innerHTML = '<div class="empty-msg">Queue is empty</div>'; return; }
+  el.innerHTML = rideQueue.map((r,i) => `
+    <div class="queue-item">
+      <div class="pname">#${i+1} — ${r.passenger}</div>
+      <div class="route">${locations[r.from]} <span class="queue-arrow">→</span> ${locations[r.to]}</div>
+    </div>
+  `).join('');
+}
+
+function renderHistory() {
+  const el = document.getElementById('historyList');
+  if (!rideHistory.length) { el.innerHTML = '<div class="empty-msg">No completed rides</div>'; return; }
+  el.innerHTML = rideHistory.map(r => `
+    <div class="history-item">
+      <div class="h-top">
+        <span class="h-name">${r.passenger}</span>
+        <span class="h-fare">Rs.${r.fare}</span>
+      </div>
+      <div class="h-route">${r.from} → ${r.to} • ${r.distance}km • Driver: ${r.driver}</div>
+    </div>
+  `).join('');
+}
+
+function updateStats() {
+  document.getElementById('statDrivers').textContent = drivers.length;
+  document.getElementById('statAvailable').textContent = drivers.filter(d=>d.available).length;
+  document.getElementById('statQueue').textContent = rideQueue.length;
+  document.getElementById('statRides').textContent = rideHistory.length;
+}
+
+function switchTab(name) {
+  ['request','driver','path','traverse'].forEach(t => {
+    document.getElementById('tab-'+t).style.display = t===name ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach((el,i) => {
+    el.classList.toggle('active', ['request','driver','path','traverse'][i] === name);
+  });
+}
+
+// ============================================================
+//  POPULATE SELECTS
+// ============================================================
+function populateSelects() {
+  const selects = ['fromLoc','toLoc','driverLoc','pathFrom','pathTo','traverseFrom'];
+  selects.forEach(id => {
+    const el = document.getElementById(id);
+    el.innerHTML = locations.map((l,i) => `<option value="${i}">${i} — ${l}</option>`).join('');
+  });
+  document.getElementById('toLoc').value = 4;
+  document.getElementById('pathTo').value = 4;
+}
+
+// ============================================================
+//  INIT
+// ============================================================
+window.addEventListener('load', () => {
+  populateSelects();
+  resizeCanvas();
+  updateAll();
+});
+window.addEventListener('resize', resizeCanvas);
+</script>
+</body>
+</html>
